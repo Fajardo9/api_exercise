@@ -54,7 +54,7 @@ public class ClientRequest extends BaseRequest {
      */
     public Response updateClient(Client client, String clientId) {
         endpoint = String.format(Constants.URL_WITH_PARAM, Constants.CLIENTS_PATH, clientId);
-        return requestPut(endpoint, createBaseHeaders(), client);
+        return requestPatch(endpoint, createBaseHeaders(), client);
     }
 
     /**

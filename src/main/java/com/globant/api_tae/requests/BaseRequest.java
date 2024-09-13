@@ -8,21 +8,25 @@ import io.restassured.response.Response;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * The BaseRequest class provides general methods to perform HTTP requests
+ * using the RestAssured library. It includes methods for GET, POST, PUT, PATCH, and DELETE
+ * requests, as well as creating base headers and validating JSON schema.
+ */
 public class BaseRequest {
     /**
      * This is a function to read elements using rest-assured
      *
      * @param endpoint api url
      * @param headers  a map of headers
-     *
      * @return Response
      */
     protected Response requestGet(String endpoint, Map<String, ?> headers) {
         return RestAssured.given()
-                          .contentType(Constants.VALUE_CONTENT_TYPE)
-                          .headers(headers)
-                          .when()
-                          .get(endpoint);
+                .contentType(Constants.VALUE_CONTENT_TYPE)
+                .headers(headers)
+                .when()
+                .get(endpoint);
     }
 
     /**
@@ -31,16 +35,32 @@ public class BaseRequest {
      * @param endpoint api url
      * @param headers  a map of headers
      * @param body     model object
-     *
      * @return Response
      */
     protected Response requestPost(String endpoint, Map<String, ?> headers, Object body) {
         return RestAssured.given()
-                          .contentType(Constants.VALUE_CONTENT_TYPE)
-                          .headers(headers)
-                          .body(body)
-                          .when()
-                          .post(endpoint);
+                .contentType(Constants.VALUE_CONTENT_TYPE)
+                .headers(headers)
+                .body(body)
+                .when()
+                .post(endpoint);
+    }
+
+    /**
+     * This is a function to create an element using rest-assured
+     *
+     * @param endpoint api url
+     * @param headers  a map of headers
+     * @param body     model object
+     * @return Response
+     */
+    protected Response requestPut(String endpoint, Map<String, ?> headers, Object body) {
+        return RestAssured.given()
+                .contentType(Constants.VALUE_CONTENT_TYPE)
+                .headers(headers)
+                .body(body)
+                .when()
+                .put(endpoint);
     }
 
     /**
@@ -49,32 +69,31 @@ public class BaseRequest {
      * @param endpoint api url
      * @param headers  a map of headers
      * @param body     model object
-     *
      * @return Response
      */
-    protected Response requestPut(String endpoint, Map<String, ?> headers, Object body) {
+    protected Response requestPatch(String endpoint, Map<String, ?> headers, Object body) {
         return RestAssured.given()
-                          .contentType(Constants.VALUE_CONTENT_TYPE)
-                          .headers(headers)
-                          .body(body)
-                          .when()
-                          .put(endpoint);
+                .contentType(Constants.VALUE_CONTENT_TYPE)
+                .headers(headers)
+                .body(body)
+                .when()
+                .patch(endpoint);
     }
+
 
     /**
      * This is a function to delete an element using rest-assured
      *
      * @param endpoint api url
      * @param headers  a map of headers
-     *
      * @return Response
      */
     protected Response requestDelete(String endpoint, Map<String, ?> headers) {
         return RestAssured.given()
-                          .contentType(Constants.VALUE_CONTENT_TYPE)
-                          .headers(headers)
-                          .when()
-                          .delete(endpoint);
+                .contentType(Constants.VALUE_CONTENT_TYPE)
+                .headers(headers)
+                .when()
+                .delete(endpoint);
     }
 
     /**
@@ -87,6 +106,7 @@ public class BaseRequest {
         headers.put(Constants.CONTENT_TYPE, Constants.VALUE_CONTENT_TYPE);
         return headers;
     }
+
     public boolean validateSchema(Response response, String schemaPath) {
         try {
             response.then()
