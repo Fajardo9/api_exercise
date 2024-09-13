@@ -10,6 +10,10 @@ public final class Constants {
     public static final  String BASE_URL                 = "https://66e355c2494df9a478e4f6d0.mockapi.io";
     public static final  String URL                      = "/api/v1/%s";
     public static final  String URL_WITH_PARAM           = "/api/v1/%s/%s";
+    public static final String FEATURES_PATH = "src/test/resources/features";
+    public static final String PRETTY_PLUGIN = "pretty:target/cucumber/cucumber.txt";
+    public static final String HTML_PLUGIN = "html:target/cucumber/report";
+    public static final String JSON_PLUGIN = "json:target/cucumber.json";
 
     private Constants() {
     }
