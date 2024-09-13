@@ -17,12 +17,13 @@ Feature:  Change the phone number of the first Client named Laura
       | Name  | LastName | Country  | City | Email              | Phone      | Id |
       | Laura | Martinez | Colombia | Cali | lauracali@mail.com | 3122585565 | 1  |
     And Verify that there is a client with the name "Laura"
-    And save the existent phone number and change it to "3135515223"
-    And verify that the phone number has been changed correctly to "3135515223"
+    And save the existent phone number and change it to "3135515211"
+    And verify that the phone number has been changed correctly to "3135515211"
 
   @Smoke @xd
   Scenario: Cleanup all data created during the test execution
     Given Verify if any data was created
     When if the client "Laura" already exists, rollback her phone number
     Then delete all created data.
-    And Verify that the changes has been done
+    And verify if the changes has been rolled back
+    And validates the response with client list JSON schema
