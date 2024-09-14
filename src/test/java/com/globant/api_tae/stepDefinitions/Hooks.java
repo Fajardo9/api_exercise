@@ -32,7 +32,7 @@ public class Hooks {
         long activeResources = resourcesList.stream().map(Resource::isActive).count();
         int desiredResources = 5;
         if ( activeResources <= desiredResources) {
-            for (int i = Math.toIntExact(activeResources); i < desiredResources; i++){
+            for (int i = Math.toIntExact(activeResources); i <= desiredResources + 1; i++){
                 Resource resource = Resource.builder()
                         .name("Resource " + i)
                         .trademark("Trademark " + i)
@@ -41,7 +41,7 @@ public class Hooks {
                         .description("Descripcion" + i)
                         .tags("Tags" + i)
                         .active(true)
-                        .id("1")
+                        .id("2")
                         .build();
                 Response createResponse = resourceRequest.createResource(resource);
                 log.info(createResponse.jsonPath().prettify());
@@ -60,7 +60,16 @@ public class Hooks {
 
     }
 
-    public void cleanUpData(String phone){
+    @After
+    public void cleanUpDataResources(String phone){
+        response = resourceRequest.getResources();
+        List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
+        resourceList.stream()
+                .filter(r -> r.getName().contains("Resource"))
+                .forEach(r -> {
+                    log.info("Deleting client with ID: {}", r.getId());
+                    resourceRequest.deleteResource(r.getId());
+                });
 
     }
 }
