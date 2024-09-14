@@ -25,19 +25,20 @@ public class Hooks {
         log.info("*****************************************************************************************");
         RestAssured.baseURI = Constants.BASE_URL;
     }
+
     @Before
-    public void setupActiveResources(){
+    public void setupActiveResources() {
         response = resourceRequest.getResources();
         List<Resource> resourcesList = resourceRequest.getResourcesEntity(response);
-        long activeResources = resourcesList.stream().map(Resource::isActive).count();
-        int desiredResources = 5;
-        if ( activeResources <= desiredResources) {
-            for (int i = Math.toIntExact(activeResources); i <= desiredResources + 1; i++){
+        long activeResources = resourcesList.stream().filter(Resource::isActive).count();
+        int desiredResources = 15;
+        if (activeResources <= desiredResources) {
+            for (int i = Math.toIntExact(activeResources); i <= desiredResources + 1; i++) {
                 Resource resource = Resource.builder()
                         .name("Resource " + i)
                         .trademark("Trademark " + i)
                         .stock(i)
-                        .price(i+12.0)
+                        .price(i + 12.0)
                         .description("Descripcion" + i)
                         .tags("Tags" + i)
                         .active(true)
@@ -53,23 +54,21 @@ public class Hooks {
     }
 
     @After
-    public void cleanUp(Scenario scenario){
+    public void cleanUp(Scenario scenario) {
         log.info("*****************************************************************************************");
         log.info("	Scenario finished: " + scenario.getName());
         log.info("*****************************************************************************************");
-
     }
 
     @After
-    public void cleanUpDataResources(String phone){
+    public void cleanUpDataResources() { // Removed the String phone parameter
         response = resourceRequest.getResources();
         List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
         resourceList.stream()
                 .filter(r -> r.getName().contains("Resource"))
                 .forEach(r -> {
-                    log.info("Deleting client with ID: {}", r.getId());
+                    log.info("Deleting resource with ID: {}", r.getId());
                     resourceRequest.deleteResource(r.getId());
                 });
-
     }
 }

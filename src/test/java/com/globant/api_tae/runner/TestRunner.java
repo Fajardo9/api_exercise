@@ -11,10 +11,10 @@ import static com.globant.api_tae.utils.Constants.*;
 @RunWith(Cucumber.class)
 @CucumberOptions(
         features = FEATURES_PATH,
-        glue = "com.globant.api_tae.stepDefinitions.ResourceSteps",
+        glue = "com.globant.api_tae.stepDefinitions",
         snippets = CucumberOptions.SnippetType.CAMELCASE,
         monochrome = true,
-        tags = "@xd and @dx",
+        tags = "@xd",
         plugin = {
                 PRETTY_PLUGIN,
                 HTML_PLUGIN,

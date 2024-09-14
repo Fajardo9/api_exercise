@@ -45,15 +45,26 @@ public class ResourceRequest extends BaseRequest {
     }
 
     /**
-     * Update resource by id
+     * Partially update resource by id
      *
      * @param resource   model
      * @param resourceId string
      * @return rest-assured response
      */
-    public Response updateResource(Resource resource, String resourceId) {
+    public Response partiallyUpdateResource(Resource resource, String resourceId) {
         endpoint = String.format(Constants.URL_WITH_PARAM, Constants.RESOURCES_PATH, resourceId);
         return requestPatch(endpoint, createBaseHeaders(), resource);
+    }
+    /**
+     * Update resource by id
+     *
+     * @param resource model
+     * @param resourceId string
+     * @return rest-assured response
+     */
+    public Response updateResource(Resource resource, String resourceId) {
+        endpoint = String.format(Constants.URL_WITH_PARAM, Constants.RESOURCES_PATH, resourceId);
+        return requestPut(endpoint, createBaseHeaders(), resource);
     }
 
     /**
