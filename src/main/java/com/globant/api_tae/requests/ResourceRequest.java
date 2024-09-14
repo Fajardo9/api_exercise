@@ -12,63 +12,66 @@ import java.util.List;
 
 public class ResourceRequest extends BaseRequest {
     private String endpoint;
-
     /**
-     * Get Client list
+     * Get Resources list
+     *
      * @return rest-assured response
      */
     public Response getResources() {
-        endpoint = String.format(Constants.URL, Constants.CLIENTS_PATH);
+        endpoint = String.format(Constants.URL, Constants.RESOURCES_PATH);
         return requestGet(endpoint, createBaseHeaders());
     }
 
     /**
-     * Get client by id
-     * @param clientId string
+     * Get Resource by id
+     *
+     * @param resourceId string
      * @return rest-assured response
      */
-    public Response getResourceById(String clientId) {
-        endpoint = String.format(Constants.URL_WITH_PARAM, Constants.CLIENTS_PATH, clientId);
+    public Response getResource(String resourceId) {
+        endpoint = String.format(Constants.URL_WITH_PARAM, Constants.RESOURCES_PATH, resourceId);
         return requestGet(endpoint, createBaseHeaders());
     }
 
     /**
-     * Create resource
+     * Create Resource
+     *
      * @param resource model
      * @return rest-assured response
      */
     public Response createResource(Resource resource) {
-        endpoint = String.format(Constants.URL, Constants.CLIENTS_PATH);
+        endpoint = String.format(Constants.URL,Constants.RESOURCES_PATH);
         return requestPost(endpoint, createBaseHeaders(), resource);
     }
 
     /**
      * Update resource by id
-     * @param resource model
+     *
+     * @param resource   model
      * @param resourceId string
      * @return rest-assured response
      */
     public Response updateResource(Resource resource, String resourceId) {
-        endpoint = String.format(Constants.URL_WITH_PARAM, Constants.CLIENTS_PATH, resourceId);
-        return requestPut(endpoint, createBaseHeaders(), resource);
+        endpoint = String.format(Constants.URL_WITH_PARAM, Constants.RESOURCES_PATH, resourceId);
+        return requestPatch(endpoint, createBaseHeaders(), resource);
     }
 
     /**
-     * Delete client by id
-     * @param resource string
+     * Delete resource by id
+     *
+     * @param resourceId string
      * @return rest-assured response
      */
-    public Response deleteResource(String resource) {
-        endpoint = String.format(Constants.URL_WITH_PARAM, Constants.CLIENTS_PATH, resource);
+    public Response deleteResource(String resourceId) {
+        endpoint = String.format(Constants.URL_WITH_PARAM, Constants.RESOURCES_PATH, resourceId);
         return requestDelete(endpoint, createBaseHeaders());
     }
 
     public Resource getResourceEntity(@NotNull Response response) {
-        return response
-                .as(Resource.class);
+        return response.as(Resource.class);
     }
 
-    public List<Resource> getResourceEntities(@NotNull Response response) {
+    public List<Resource> getResourcesEntity(@NotNull Response response) {
         JsonPath jsonPath = response.jsonPath();
         return jsonPath.getList("", Resource.class);
     }
