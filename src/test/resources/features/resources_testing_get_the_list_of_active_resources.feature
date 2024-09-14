@@ -14,7 +14,7 @@ Feature: Resource Management
     When I update the status of the resources to inactive
     Then the response should have a status code 200
     And validates the response with client list JSON schema
-    And verify that all the resources are inactive
+    And verify that all the resources are marked as inactive
 
   @smoke @dx
   Scenario: Get the list of all the resources
