@@ -17,11 +17,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+/**
+ * The {@code ClientModificationSteps} class provides the step definitions for
+ * modifying client data in a test suite. It uses REST API calls to interact with
+ * client data and perform various operations like creating, updating, verifying
+ * and deleting client information.
+ */
 public class ClientModificationSteps {
     private static final Logger log = LogManager.getLogger(ClientModificationSteps.class);
-
     private final ClientRequest clientRequest = new ClientRequest();
     private Response response;
     private Client auxClient;
@@ -29,12 +36,18 @@ public class ClientModificationSteps {
     protected Boolean clientWasCreated = false;
     private Boolean thereWasAtLeastTenClients = false;
 
+
+    /**
+     * Sends a GET request to retrieve a list of all clients.
+     */
     @Given("I send a GET request to view all the clients")
     public void iSendAGETRequestToViewAllTheClient() {
         response = clientRequest.getClients();
     }
 
-
+    /**
+     * Receive the response of the request and validates that is Ok(200)
+     */
     @When("receive the response")
     public void receiveTheResponse() {
         log.info(response.jsonPath().prettify());
@@ -42,6 +55,12 @@ public class ClientModificationSteps {
         assertEquals(200, response.statusCode());
     }
 
+    /**
+     * Creates missing clients if the current number of clients is less than the desired number.
+     * {@code @Annotation} The Clients generated will have the name and lastName as "Client" by defect
+     *
+     * @param desiredClients The desired number of clients.
+     */
     @Then("create the missing clients if there are less than {int} clients")
     public void createTheMissingClientsIfThereAreLessThanClients(int desiredClients) {
         List<Client> clientList = clientRequest.getClientsEntity(response);
@@ -65,7 +84,12 @@ public class ClientModificationSteps {
         }
     }
 
-    @And("verify that the number of clients is {int}")
+    /**
+     * Verifies that the number of clients in the system is at least the expected count.
+     *
+     * @param expectedCount the minimum number of clients expected
+     */
+    @Then("verify that the number of clients is {int}")
     public void verifyThatTheNumberOfClientsIs(int expectedCount) {
         response = clientRequest.getClients();
         List<Client> clientList = clientRequest.getClientsEntity(response);
@@ -73,6 +97,11 @@ public class ClientModificationSteps {
         assertTrue("The number of clients does not match the expected count. " + expectedCount + " " + actualCount, expectedCount <= actualCount);
     }
 
+    /**
+     * Verifies that there is a client with the specified name.
+     *
+     * @param nameClient the name of the client to be verified
+     */
     @Then("Verify that there is a client with the name {string}")
     public void verifyThatThereIsAClientWithTheName(String nameClient) {
         response = clientRequest.getClients();
@@ -90,7 +119,15 @@ public class ClientModificationSteps {
         }
     }
 
-    @And("if there is not a client with the name Laura, create a new client with the following data:")
+    /**
+     * Checks if there is a client with the name Laura.
+     * If the client does not exist, creates a new client with the provided data.
+     *
+     * @param clientData DataTable containing the following client information:
+     *                   Name, LastName, Country, City, Email, Phone, and ID.
+     */
+
+    @Then("if there is not a client with the name Laura, create a new client with the following data:")
     public void ifThereIsNotAClientWithTheNameLauraCreateANewClientWithTheFollowingData(@NotNull DataTable clientData) {
         Map<String, String> clientDataMap = clientData.asMaps().get(0);
         if (auxClient == null) {
@@ -112,7 +149,13 @@ public class ClientModificationSteps {
 
     }
 
-    @And("save the existent phone number and change it to {string}")
+    /**
+     * Changes the phone number of a client to the provided by the user
+     * and save the old number in auxiliary variable.
+     *
+     * @param phoneNumber the new phone number to be set for the client
+     */
+    @Then("save the existent phone number and change it to {string}")
     public void saveTheExistentPhoneNumberAndChangeItTo(String phoneNumber) {
         auxNumber = auxClient.getPhone();
         auxClient.setPhone(phoneNumber);
@@ -121,9 +164,15 @@ public class ClientModificationSteps {
         log.info(response.statusCode());
     }
 
-    @And("verify that the phone number has been changed correctly to {string}")
+    /**
+     * Verifies that the phone number of a client has been changed correctly to the specified new phone number.
+     *
+     * @param newPhoneNumber The new phone number to verify against the client's updated phone number.
+     */
+    @Then("verify that the phone number has been changed correctly to {string}")
     public void verifyThatThePhoneNumberHasBeenChangedCorrectlyTo(String newPhoneNumber) {
         response = clientRequest.getClient(auxClient.getId());
+        //og.info("Are different the phone numbers?{}, {}", auxNumber, response.jsonPath().getString("phone"));
         assertNotEquals(auxNumber, response.jsonPath().getString("phone"));
         assertEquals(newPhoneNumber, response.jsonPath().getString("phone"));
         log.info(response.jsonPath().prettify());
@@ -142,12 +191,19 @@ public class ClientModificationSteps {
         }
     }
 
-    @When("if the client {string} already exists, rollback her phone number")
-    public void ifTheClientAlreadyExistsRollbackHerPhoneNumber(String nameClient) {
+    /**
+     * Checks if a client with the specified name and phone number already exists.
+     * If the client exists, rolls back her phone number to a previous state.
+     *
+     * @param nameClient the name of the client whose existence is being checked
+     * @param lastName the phone number of the client being checked
+     */
+    @When("I verify if the client {string} with the {string} previously exists, rollback her phone number")
+    public void ifTheClientAlreadyExistsRollbackHerPhoneNumber(String nameClient, String lastName) {
         if (!clientWasCreated && auxClient != null) {
             List<Client> clientList = clientRequest.getClientsEntity(response);
             Optional<Client> optionalClient = clientList.stream()
-                    .filter(client -> client.getName().equalsIgnoreCase(nameClient))
+                    .filter(client -> client.getName().equalsIgnoreCase(nameClient) && client.getLastName().equalsIgnoreCase(lastName))
                     .findFirst();
             optionalClient.ifPresent(client -> auxClient = client);
             auxClient.setPhone(auxNumber);
@@ -161,37 +217,26 @@ public class ClientModificationSteps {
 
     @Then("delete all created data.")
     public void deleteAllCreatedData() {
-        if (clientWasCreated) {
+        List<Client> clientList = clientRequest.getClientsEntity(response);
+        Optional<Client> optionalClient = clientList.stream()
+                .filter(client -> client.getName().equalsIgnoreCase("Laura"))
+                .findFirst();
+        if(optionalClient.isPresent() && clientWasCreated) {
+            auxClient = optionalClient.get();
             clientRequest.deleteClient(auxClient.getId());
             log.info("The client was deleted: {}", auxClient.getName());
             log.info(response.jsonPath().prettify());
             Assert.assertEquals(200, response.statusCode());
             Assert.assertEquals(auxClient.getId(), response.jsonPath().getString("id"));
-        } else if (!thereWasAtLeastTenClients) {
-            List<Client> clientList = clientRequest.getClientsEntity(response);
+        }
+        if (!thereWasAtLeastTenClients) {
             clientList.stream()
-                    .filter(c -> c.getName().equalsIgnoreCase("Client")) // Filtrar clientes por nombre, ajusta según sea necesario
+                    .filter(c -> c.getName().contains("Client"))
                     .forEach(c -> {
                         log.info("Deleting client with ID: {}", c.getId());
                         clientRequest.deleteClient(c.getId());
                     });
         }
-    }
-
-    @Then("verify if the changes has been rolled back")
-    public void verifyThatTheChangesHasBeenDone() {
-        List<Client> clientList = clientRequest.getClientsEntity(response);
-        Optional<Client> optionalClient = clientList.stream()
-                .filter(client -> client.getName().equalsIgnoreCase("Laura"))
-                .findFirst();
-        if (!clientWasCreated) {
-            auxClient = optionalClient.get();
-            Assert.assertNotEquals(auxNumber, response.jsonPath().getString("phone"));
-            Assert.assertEquals(auxClient.getPhone(), response.jsonPath().getString("phone"));
-        } else {
-            Assert.assertFalse(optionalClient.isPresent());
-        }
-        log.info(response.jsonPath().prettify());
     }
 
     @Then("validates the response with client JSON schema")
