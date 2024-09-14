@@ -4,8 +4,6 @@ import io.cucumber.junit.Cucumber;
 import io.cucumber.junit.CucumberOptions;
 import org.junit.runner.RunWith;
 
-import java.lang.invoke.ConstantCallSite;
-
 import static com.globant.api_tae.utils.Constants.*;
 
 @RunWith(Cucumber.class)
@@ -14,13 +12,13 @@ import static com.globant.api_tae.utils.Constants.*;
         glue = "com.globant.api_tae.stepDefinitions",
         snippets = CucumberOptions.SnippetType.CAMELCASE,
         monochrome = true,
-        tags = "@smoke",
+        tags = "@clientChangingNumber",
         plugin = {
                 PRETTY_PLUGIN,
                 HTML_PLUGIN,
                 JSON_PLUGIN
         }
 )
-public class TestRunner {
+public class TestRunnerChangingNumber {
 
 }
