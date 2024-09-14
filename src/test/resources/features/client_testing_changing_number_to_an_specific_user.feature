@@ -1,14 +1,14 @@
 @active
 Feature:  Change the phone number of the first Client named Laura
 
-  @Smoke @changingNumber
+  @Smoke @clientChangingNumber
   Scenario: Validate that there are at least 10 clients when a GET request is made before the client modification
     Given I send a GET request to view all the clients
     When receive the response
     Then create the missing clients if there are less than 10 clients
     And verify that the number of clients is 10
 
-  @Smoke @changingNumber
+  @Smoke @clientChangingNumber
   Scenario: Verify that there are a client with the name Laura and change their phone number
     Given I send a GET request to view all the clients
     When receive the response
@@ -21,7 +21,7 @@ Feature:  Change the phone number of the first Client named Laura
     And verify that the phone number has been changed correctly to "3135515222"
     And validates the response with client JSON schema
 
-  @Smoke @changingNumber
+  @Smoke @clientChangingNumber
   Scenario Outline: Cleanup all data created during the test execution
     Given Verify if any data was created
     When I verify if the client <nameClient> with the <lastName> previously exists, rollback her phone number
