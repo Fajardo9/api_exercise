@@ -2,7 +2,6 @@ package com.globant.api_tae.stepDefinitions;
 
 import com.globant.api_tae.models.Resource;
 import com.globant.api_tae.requests.ResourceRequest;
-import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -13,83 +12,12 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 public class ResourceSteps {
-    private static final Logger log = LogManager.getLogger(ResourceRequest.class);
+    private static final Logger log = LogManager.getLogger(ResourceSteps.class);
     private final ResourceRequest resourceRequest = new ResourceRequest();
     private Response response;
-
-    @Given("there are not enough resources for the test")
-    public void thereAreNotEnoughResourcesForTheTest() {
-        response = resourceRequest.getResources();
-        List<Resource> resources = resourceRequest.getResourcesEntity(response); // Obtener la lista de recursos
-        log.info("Current resources: {}", resources.size());
-
-        Assert.assertTrue("There should be less than 20 resources, but found: " + resources.size(), resources.size() < 20);
-    }
-
-    @When("I create the following inactive resources:")
-    public void iCreateTheFollowingInactiveResources(DataTable inactiveResourceData) {
-        // Obtener recursos existentes
-        response = resourceRequest.getResources();
-        List<Resource> resources = resourceRequest.getResourcesEntity(response);
-
-        //log.info("Current resources count: {}", resources.size());
-
-        // Verificar si hay menos de 5 recursos
-        if (resources.size() < 10) {
-            // Crear recursos inactivos a partir de la DataTable
-            List<Map<String, String>> resourceData = inactiveResourceData.asMaps(String.class, String.class);
-            for (Map<String, String> resource : resourceData) {
-                Resource inactiveResource = Resource.builder()
-                        .name(resource.get("Name"))
-                        .trademark(resource.get("Trademark"))
-                        .stock(Integer.parseInt(resource.get("Stock")))
-                        .price(Double.parseDouble(resource.get("Price")))
-                        .description(resource.get("Description"))
-                        .tags(resource.get("Tags"))
-                        .active(false)
-                        .build();
-
-                // Crear el recurso
-                response = resourceRequest.createResource(inactiveResource);
-                //log.info("Inactive resource created: {}", response.jsonPath().prettify());
-                //Assert.assertEquals(201, response.statusCode()); // Verificación de creación exitosa
-                //log.info("Response from getResources: {}", response.getBody().asString());
-            }
-
-            // Volver a obtener la lista de recursos después de la creación
-            response = resourceRequest.getResources();
-            log.info("Response from getResources: {}", response.getBody().asString());
-            //resources = resourceRequest.getResourcesEntity(response);
-            //log.info("Response from getResources: {}", response.getBody().asString());
-           // log.info("New resources count after creation: {}", resources.size());
-        } else {
-            log.info("There are already enough resources ({}), no need to create more.", resources.size());
-            log.info("Response from getResources: {}", response.getBody().asString());
-        }
-
-    }
-
-    @And("I create the following active resources:")
-    public void iCreateTheFollowingActiveResources(DataTable activeResourceData) {
-        List<Map<String, String>> resources = activeResourceData.asMaps(String.class, String.class);
-        for (Map<String, String> resource : resources) {
-            Resource inactiveResource = Resource.builder()
-                    .name(resource.get("Name"))
-                    .trademark(resource.get("Trademark"))
-                    .stock(Integer.parseInt(resource.get("Stock")))
-                    .price(Double.parseDouble(resource.get("Price")))
-                    .description(resource.get("Description"))
-                    .tags(resource.get("Tags"))
-                    .active(true)
-                    .build();
-            response = resourceRequest.createResource(inactiveResource);
-            log.info("Inactive resource created: {}", response.jsonPath().prettify());
-        }
-        log.info("Ther quantity of Active resources generated is: {}", resourceRequest.getResourcesEntity(response).size());
-    }
 
     @Then("the response should have a status code of {int}")
     public void theResponseShouldHaveAStatusCodeOf(int responseCode) {
@@ -104,10 +32,105 @@ public class ResourceSteps {
     }
 
     @And("verify that the products has been created:")
-    public void verifyThatTheProductsHasBeenCreathed() {
+    public void verifyThatTheProductsHasBeenCreated() {
         response = resourceRequest.getResources();
         log.info("Available Resources: {}", response.jsonPath().prettify());
     }
 
 
+    @Given("there are at least {int} active resources in the system")
+    public void thereAreAtLeastActiveResourcesInTheSistem(int desiredResources) {
+        response = resourceRequest.getResources();
+        List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
+        long activeResources = resourceList.stream().filter(Resource::isActive).count();
+        log.info("The number of active resources are: {}", activeResources);
+        Assert.assertTrue(activeResources >= desiredResources);
+    }
+
+    @When("I find all the active resources")
+    public void iFindAllTheActiveResources() {
+        response = resourceRequest.getResources();
+        List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
+        long activeResources = resourceList.stream().filter(Resource::isActive).count();
+        log.info("The number ofo active resources are: {}", activeResources);
+    }
+
+    @Then("the response should have a status code {int}")
+    public void theResponseShouldHaveAStatusCode(int expectedCode) {
+        response = resourceRequest.getResources();
+        Assert.assertEquals(expectedCode, response.getStatusCode());
+        log.info(response.jsonPath().prettify());
+    }
+
+    @And("validates the response with resource list JSON schema")
+    public void validatesTheResponseWithResourceListJSONSchema() {
+        String path = "schemas/resourceListSchema.json";
+        Assert.assertTrue(resourceRequest.validateSchema(response, path));
+        log.info("Successfully Validated schema from Client List object");
+    }
+
+    @Given("there are active resources in the system")
+    public void thereAreActiveResourcesInTheSystem() {
+        response = resourceRequest.getResources();
+        List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
+        Optional<Resource> optionalResource = resourceList.stream().filter(Resource::isActive)
+                .findAny();
+        if (optionalResource.isPresent()) {
+            log.info("Active resource found: {}", optionalResource.get().getName());
+            log.info("There are {} active products", optionalResource.stream().count());
+        } else {
+            log.warn("No active resources found in the system.");
+        }
+    }
+
+    @When("I update the status of the resources to inactive")
+    public void iUpdateTheStatusOfTheResourcesToInactive() {
+        response = resourceRequest.getResources();
+        List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
+
+        for (Resource resource : resourceList) {
+            if (resource.isActive()) {
+                resource.setActive(false);
+                Response updateResponse = resourceRequest.updateResource(resource, resource.getId());
+                Assert.assertEquals(200, updateResponse.statusCode());
+                log.info("Resource updated to inactive: {}", resource.getName());
+            }
+        }
+    }
+
+
+    @Given("there are all the products marked as inactive")
+    public void thereAreAllTheProductsMarkedAsInactive() {
+        response = resourceRequest.getResources();
+        resourceRequest.getResourcesEntity(response);
+        List<Resource> resourceList;
+        response = resourceRequest.getResources();
+        resourceList = resourceRequest.getResourcesEntity(response);
+        boolean allInactive = resourceList.stream().allMatch(resource -> !resource.isActive());
+
+        Assert.assertTrue("Not all resources are inactive.", allInactive);
+        log.info("All resources are confirmed to be inactive.");
+
+    }
+
+    @When("I send a GET request to view all the resources")
+    public void iSendAGETRequestToViewAllTheResources() {
+        response = resourceRequest.getResources();
+        log.info("Response received: {}", response.asString());
+    }
+
+    @Given("a new client to create")
+    public void aNewClientToCreate() {
+        response = resourceRequest.getResources();
+    }
+
+
+    @And("verify that all the resources are marked as inactive")
+    public void verifyThatAllTheResourcesAreMarkedAsInactive() {
+        response = resourceRequest.getResources();
+        List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
+        boolean allInactive = resourceList.stream().noneMatch(Resource::isActive);
+        Assert.assertTrue("Not all resources are inactive.", allInactive);
+        log.info("All resources are confirmed to be inactive.");
+    }
 }
