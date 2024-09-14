@@ -1,5 +1,5 @@
 {
-  "type": "Object",
+  "type": "object",
   "properties": {
     "name": {
       "type": "string"
@@ -8,10 +8,10 @@
       "type": "string"
     },
     "stock": {
-      "type": "string"
+      "type": "integer"
     },
     "price": {
-      "type": "string"
+      "type": "number"
     },
     "description": {
       "type": "string"
@@ -20,7 +20,7 @@
       "type": "string"
     },
     "active": {
-      "type": "string"
+      "type": "boolean"
     },
     "id": {
       "type": "string"
