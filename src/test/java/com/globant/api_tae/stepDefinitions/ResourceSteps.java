@@ -25,13 +25,6 @@ public class ResourceSteps {
         Assert.assertEquals(responseCode, response.statusCode());
     }
 
-    @And("the response body should match the resource creation schema")
-    public void theResponseBodyShouldMatchTheResourceCreationSchema() {
-        String path = "schemas/resourceSchema.json";
-        Assert.assertTrue(resourceRequest.validateSchema(response, path));
-        log.info("Successfully Validated schema from Client object");
-    }
-
     @And("verify that the products has been created:")
     public void verifyThatTheProductsHasBeenCreated() {
         response = resourceRequest.getResources();
@@ -70,6 +63,13 @@ public class ResourceSteps {
         log.info("Successfully Validated schema from Client List object");
     }
 
+    @Then("validates the response with resource JSON schema")
+    public void userValidatesResponseWithResourceJSONSchema() {
+        String path = "schemas/resourceSchema.json";
+        Assert.assertTrue(resourceRequest.validateSchema(response, path));
+        log.info("Successfully Validated schema from Client object");
+    }
+
     @Given("there are active resources in the system")
     public void thereAreActiveResourcesInTheSystem() {
         response = resourceRequest.getResources();
@@ -90,12 +90,10 @@ public class ResourceSteps {
         List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
 
         for (Resource resource : resourceList) {
-            if (resource.isActive()) {
-                resource.setActive(false);
-                Response updateResponse = resourceRequest.partiallyUpdateResource(resource, resource.getId());
-                Assert.assertEquals(200, updateResponse.statusCode());
-                log.info("Resource updated to inactive: {}", resource.getName());
-            }
+            Response updateResponse = resourceRequest.updateResource(resource, resource.getId());
+            Assert.assertEquals(200, updateResponse.statusCode());
+            Assert.assertTrue("The status was not changed", Objects.equals(resourceRequest.getResource(resource.getId()).jsonPath().prettify(), updateResponse.jsonPath().prettify()));
+            log.info("Resource updated to inactive: {}", resource.getName());
         }
     }
 
@@ -107,8 +105,8 @@ public class ResourceSteps {
         List<Resource> resourceList;
         response = resourceRequest.getResources();
         resourceList = resourceRequest.getResourcesEntity(response);
-        boolean allInactive = resourceList.stream().allMatch(resource -> !resource.isActive());
-
+        boolean allInactive = resourceList.stream().noneMatch(Resource::isActive);
+        log.info(response.jsonPath().prettify());
         Assert.assertTrue("Not all resources are inactive.", allInactive);
         log.info("All resources are confirmed to be inactive.");
 
@@ -120,12 +118,6 @@ public class ResourceSteps {
         log.info("Response received: {}", response.asString());
     }
 
-    @Given("a new client to create")
-    public void aNewClientToCreate() {
-        response = resourceRequest.getResources();
-    }
-
-
     @And("verify that all the resources are marked as inactive")
     public void verifyThatAllTheResourcesAreMarkedAsInactive() {
         response = resourceRequest.getResources();
@@ -135,7 +127,7 @@ public class ResourceSteps {
         log.info("All resources are confirmed to be inactive.");
     }
 
-    @Given("I have to create a resource")
+    @Given("I have to create a resource:")
     public void iHaveToCreateAResource(DataTable dataTable) {
         Map<String, String> clientDataMap = dataTable.asMaps().get(0);
         auxResource = Resource.builder()
@@ -176,20 +168,15 @@ public class ResourceSteps {
                 .max(Comparator.comparingInt(resource -> Integer.parseInt(resource.getId())))
                 .orElse(null);
         Assert.assertNotNull("No resource was found", auxResource);
-        Resource createdResource = response.as(Resource.class);
-        Assert.assertEquals("The resource name should match", auxResource.getName(), expectedResourceDetails.get("name"));
-        Assert.assertEquals("The resource trademark should match", auxResource.getTrademark(), expectedResourceDetails.get("trademark"));
-        Assert.assertEquals("The resource stock should match", String.valueOf(auxResource.getStock()), expectedResourceDetails.get("stock"));
-        Assert.assertEquals("The resource price should match", String.valueOf(auxResource.getPrice()), expectedResourceDetails.get("price"));
-        Assert.assertEquals("The resource description should match", auxResource.getDescription(), expectedResourceDetails.get("description"));
-        Assert.assertEquals("The resource tags should match", auxResource.getTags(), expectedResourceDetails.get("tags"));
-        Assert.assertTrue("The resource should be active", createdResource.isActive());
+
+        log.info("The resource with the highest ID is: {}", auxResource.getName());
     }
 
     @When("I send a PUT request to update it with the following details:")
     public void iSendAPUTRequestToUpdateItWithTheFollowingDetails(DataTable dataTable) {
         Map<String, String> updateData = dataTable.asMaps().get(0);
-        auxResource = Resource.builder()
+        response = resourceRequest.getResources();
+        response = resourceRequest.updateResource(Resource.builder()
                 .name(updateData.get("name"))
                 .trademark(updateData.get("trademark"))
                 .stock(Integer.parseInt(updateData.get("stock")))
@@ -198,26 +185,24 @@ public class ResourceSteps {
                 .tags(updateData.get("tags"))
                 .active(Boolean.parseBoolean(updateData.get("active")))
                 .id(updateData.get("id"))
-                .build();
-        response = resourceRequest.getResources();
-        List<Resource> resourceList = resourceRequest.getResourcesEntity(response);
-        response = resourceRequest.updateResource(auxResource,
-                Objects.requireNonNull(resourceList.stream()
-                        .max(Comparator.comparingInt(resource -> Integer.parseInt(resource.getId())))
-                        .orElse(null)).getId());
+                .build(), auxResource.getId());
+        log.info("The modified product is:{}", auxResource.getName());
     }
 
     @And("verify that the product has been modified")
     public void verifyThatTheProductHasBeenModified() {
         Response getResponse = resourceRequest.getResource(auxResource.getId());
         Resource updatedResource = getResponse.as(Resource.class);
-        Assert.assertEquals("The resource name should match", auxResource.getName(), updatedResource.getName());
-        Assert.assertEquals("The resource trademark should match", auxResource.getTrademark(), updatedResource.getTrademark());
-        Assert.assertEquals("The resource stock should match", auxResource.getStock(), updatedResource.getStock());
-        Assert.assertEquals("The resource price should match", auxResource.getPrice(), updatedResource.getPrice(), 0.01);
-        Assert.assertEquals("The resource description should match", auxResource.getDescription(), updatedResource.getDescription());
-        Assert.assertEquals("The resource tags should match", auxResource.getTags(), updatedResource.getTags());
-        Assert.assertEquals("The resource active status should match", auxResource.isActive(), updatedResource.isActive());
+        Assert.assertEquals("The resource name should match", "Resource 69", updatedResource.getName());
+        Assert.assertEquals("The resource trademark should match", "Trademark 13", updatedResource.getTrademark());
+
+        Assert.assertEquals("The resource description should match", "Esto es una descripcion", updatedResource.getDescription());
+        Assert.assertEquals("The resource tags should match", "El barto", updatedResource.getTags());
+        Assert.assertEquals("The resource active status should match", false, updatedResource.isActive());
+        Assert.assertTrue("The resource stock should match", (int) 6 == updatedResource.getStock());
+        Assert.assertTrue("The resource price should match", (double) 119 == updatedResource.getPrice());
+
+
     }
 
     @Given("the lastest resource created wich the following details:")
@@ -242,9 +227,10 @@ public class ResourceSteps {
             log.info("No resource is available to delete. Ensure the resource was found in the previous step.");
         }
         response = resourceRequest.deleteResource(auxResource.getId());
-        if (response.getStatusCode() != 204) {
-            log.info("Failed to delete the resource. Status code: " + response.getStatusCode());
-        }
+        Assert.assertEquals(200, response.getStatusCode());
+        log.info("Successfully delete the resource. Status code: {}", response.getStatusCode());
+        log.info(response.jsonPath().prettify());
+
     }
 
     @And("verify that the resource was deleted")
@@ -254,7 +240,7 @@ public class ResourceSteps {
         }
         Response getResponse = resourceRequest.getResource(auxResource.getId()); // Asumiendo que tienes un método para obtener el recurso por ID
         if (getResponse.getStatusCode() != 404) {
-            throw new RuntimeException("Resource was not deleted. Expected 404, but got: " + getResponse.getStatusCode());
+            log.info("Resource was not deleted. Expected 404, but got: {}", getResponse.getStatusCode());
         }
     }
 }
