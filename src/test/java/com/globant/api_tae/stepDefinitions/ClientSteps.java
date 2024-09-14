@@ -3,6 +3,7 @@ package com.globant.api_tae.stepDefinitions;
 import com.globant.api_tae.models.Client;
 import com.globant.api_tae.requests.ClientRequest;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -65,14 +66,7 @@ public class ClientSteps {
         List<Client> clientList = clientRequest.getClientsEntity(response);
         if (clientList.isEmpty() || clientList.size() <= desiredClients - 1) {
             for (int i = clientList.size(); i < desiredClients; i++) {
-                Client client = Client.builder()
-                        .name("Client " + i)
-                        .lastName("Client " + i)
-                        .country("Country " + i)
-                        .city("City " + i)
-                        .email("Email " + i)
-                        .phone("Phone " + i)
-                        .build();
+                Client client = Client.builder().name("Client " + i).lastName("Client " + i).country("Country " + i).city("City " + i).email("Email " + i).phone("Phone " + i).build();
                 Response createResponse = clientRequest.createClient(client);
                 log.info(createResponse.jsonPath().prettify());
                 log.info("The status code is: {}", createResponse.statusCode());
@@ -106,9 +100,7 @@ public class ClientSteps {
         response = clientRequest.getClients();
         List<Client> clientList = clientRequest.getClientsEntity(response);
 
-        Optional<Client> optionalClient = clientList.stream()
-                .filter(client -> client.getName().equalsIgnoreCase(nameClient))
-                .findFirst();
+        Optional<Client> optionalClient = clientList.stream().filter(client -> client.getName().equalsIgnoreCase(nameClient)).findFirst();
 
         if (optionalClient.isPresent()) {
             log.info("The client with the name '{}' exists.", nameClient);
@@ -130,21 +122,13 @@ public class ClientSteps {
     public void ifThereIsNotAClientWithTheNameLauraCreateANewClientWithTheFollowingData(@NotNull DataTable clientData) {
         Map<String, String> clientDataMap = clientData.asMaps().get(0);
         if (auxClient == null) {
-            response = clientRequest.createClient(Client.builder()
-                    .name(clientDataMap.get("Name"))
-                    .lastName(clientDataMap.get("LastName"))
-                    .country(clientDataMap.get("Country"))
-                    .city(clientDataMap.get("City"))
-                    .email(clientDataMap.get("Email"))
-                    .phone(clientDataMap.get("Phone"))
-                    .id(clientDataMap.get("Id")).build());
+            response = clientRequest.createClient(Client.builder().name(clientDataMap.get("Name")).lastName(clientDataMap.get("LastName")).country(clientDataMap.get("Country")).city(clientDataMap.get("City")).email(clientDataMap.get("Email")).phone(clientDataMap.get("Phone")).id(clientDataMap.get("Id")).build());
             log.info(response.statusCode());
             log.info(response.jsonPath().prettify());
-            Assert.assertEquals(201, response.statusCode());
+            assertEquals(201, response.statusCode());
             clientWasCreated = true;
         } else {
-            log.info("Client already exists with data: Name - {}, LastName - {}, Country - {}, City - {}, Email - {}, Phone - {}",
-                    auxClient.getName(), auxClient.getLastName(), auxClient.getCountry(), auxClient.getCity(), auxClient.getEmail(), auxClient.getPhone());
+            log.info("Client already exists with data: Name - {}, LastName - {}, Country - {}, City - {}, Email - {}, Phone - {}", auxClient.getName(), auxClient.getLastName(), auxClient.getCountry(), auxClient.getCity(), auxClient.getEmail(), auxClient.getPhone());
         }
 
     }
@@ -160,7 +144,7 @@ public class ClientSteps {
         auxNumber = auxClient.getPhone();
         auxClient.setPhone(phoneNumber);
         response = clientRequest.updateClient(auxClient, auxClient.getId());
-        Assert.assertEquals(200, response.statusCode());
+        assertEquals(200, response.statusCode());
         log.info(response.statusCode());
     }
 
@@ -186,8 +170,7 @@ public class ClientSteps {
         } else if (!thereWasAtLeastTenClients) {
             response = clientRequest.getClients();
             List<Client> clientList = clientRequest.getClientsEntity(response);
-            log.info("The number of clients created is: {} ",
-                    clientList.stream().filter(c -> c.getName().contains("Client")).count());
+            log.info("The number of clients created is: {} ", clientList.stream().filter(c -> c.getName().contains("Client")).count());
         }
     }
 
@@ -196,21 +179,19 @@ public class ClientSteps {
      * If the client exists, rolls back her phone number to a previous state.
      *
      * @param nameClient the name of the client whose existence is being checked
-     * @param lastName the phone number of the client being checked
+     * @param lastName   the phone number of the client being checked
      */
     @When("I verify if the client {string} with the {string} previously exists, rollback her phone number")
     public void ifTheClientAlreadyExistsRollbackHerPhoneNumber(String nameClient, String lastName) {
         if (!clientWasCreated && auxClient != null) {
             List<Client> clientList = clientRequest.getClientsEntity(response);
-            Optional<Client> optionalClient = clientList.stream()
-                    .filter(client -> client.getName().equalsIgnoreCase(nameClient) && client.getLastName().equalsIgnoreCase(lastName))
-                    .findFirst();
+            Optional<Client> optionalClient = clientList.stream().filter(client -> client.getName().equalsIgnoreCase(nameClient) && client.getLastName().equalsIgnoreCase(lastName)).findFirst();
             optionalClient.ifPresent(client -> auxClient = client);
             auxClient.setPhone(auxNumber);
             response = clientRequest.updateClient(auxClient, auxClient.getId());
-            Assert.assertEquals(200, response.statusCode());
+            assertEquals(200, response.statusCode());
             log.info(response.statusCode());
-            Assert.assertEquals(auxNumber, response.jsonPath().getString("phone"));
+            assertEquals(auxNumber, response.jsonPath().getString("phone"));
             log.info(response.jsonPath().prettify());
         }
     }
@@ -218,24 +199,20 @@ public class ClientSteps {
     @Then("delete all created data.")
     public void deleteAllCreatedData() {
         List<Client> clientList = clientRequest.getClientsEntity(response);
-        Optional<Client> optionalClient = clientList.stream()
-                .filter(client -> client.getName().equalsIgnoreCase("Laura"))
-                .findFirst();
-        if(optionalClient.isPresent() && clientWasCreated) {
+        Optional<Client> optionalClient = clientList.stream().filter(client -> client.getName().equalsIgnoreCase("Laura")).findFirst();
+        if (optionalClient.isPresent() && clientWasCreated) {
             auxClient = optionalClient.get();
             clientRequest.deleteClient(auxClient.getId());
             log.info("The client was deleted: {}", auxClient.getName());
             log.info(response.jsonPath().prettify());
-            Assert.assertEquals(200, response.statusCode());
-            Assert.assertEquals(auxClient.getId(), response.jsonPath().getString("id"));
+            assertEquals(200, response.statusCode());
+            assertEquals(auxClient.getId(), response.jsonPath().getString("id"));
         }
         if (!thereWasAtLeastTenClients) {
-            clientList.stream()
-                    .filter(c -> c.getName().contains("Client"))
-                    .forEach(c -> {
-                        log.info("Deleting client with ID: {}", c.getId());
-                        clientRequest.deleteClient(c.getId());
-                    });
+            clientList.stream().filter(c -> c.getName().contains("Client")).forEach(c -> {
+                log.info("Deleting client with ID: {}", c.getId());
+                clientRequest.deleteClient(c.getId());
+            });
         }
     }
 
@@ -251,5 +228,115 @@ public class ClientSteps {
         String path = "schemas/clientListSchema.json";
         Assert.assertTrue(clientRequest.validateSchema(response, path));
         log.info("Successfully Validated schema from Client List object");
+    }
+
+    @When("i send a post request to create a new client wich this parameters:")
+    public void iSendAPostRequestToCreateANewClientWichThisParameters(DataTable dataTable) {
+        Map<String, String> clientDataMap = dataTable.asMaps().get(0);
+        response = clientRequest.createClient(Client.builder().name(clientDataMap.get("Name")).lastName(clientDataMap.get("LastName")).country(clientDataMap.get("Country")).city(clientDataMap.get("City")).email(clientDataMap.get("Email")).phone(clientDataMap.get("Phone")).id(clientDataMap.get("Id")).build());
+        log.info(response.statusCode());
+        log.info(response.jsonPath().prettify());
+        assertEquals(201, response.statusCode());
+    }
+
+    @And("verify that the new client wich the following characteristics has been created:")
+    public void verifyThatTheNewClientWichTheFollowingCharacteristicsHasBeenCreated(DataTable dataTable) {
+        Map<String, String> clientDataMap = dataTable.asMaps().get(0);
+        response = clientRequest.getClients();
+        List<Client> clientList = clientRequest.getClientsEntity(response);
+        Optional<Client> optionalClient = clientList.stream()
+                .filter(c -> c.getLastName()
+                        .equalsIgnoreCase(clientDataMap.get("LastName")) &&
+                        c.getName().equalsIgnoreCase("Name") &&
+                        c.getPhone().equalsIgnoreCase("Phone")).findFirst();
+        Assert.assertTrue(optionalClient.isPresent());
+        log.info("The client {} has been created successfully", optionalClient.get().getName());
+
+    }
+
+    @Given("a new client to create")
+    public void aNewClientToCreate() {
+        response = clientRequest.getClients();
+    }
+
+    @Given("a new client created")
+    public void aNewClientCreated() {
+        response = clientRequest.getClients();
+
+    }
+
+    @When("I send a GET request to find the new client:")
+    public void iSendAGETRequestToFindTheNewClient(DataTable dataTable) {
+        Map<String, String> clientDataMap = dataTable.asMaps().get(0);
+        response = clientRequest.getClients();
+        List<Client> clientList = clientRequest.getClientsEntity(response);
+        Optional<Client> optionalClient = clientList.stream()
+                .filter(c -> c.getLastName().equalsIgnoreCase(clientDataMap.get("LastName")) &&
+                        c.getName().equalsIgnoreCase("Name")
+                        && c.getPhone().equalsIgnoreCase("Phone")).findFirst();
+        log.info(optionalClient.isPresent());
+        log.info(clientRequest.getClient(optionalClient.get().getId()));
+    }
+
+    @When("I update the new client with new parameters:")
+    public void iUpdateTheNewClientWithNewParameters(DataTable dataTable) {
+        Map<String, String> clientDataMap = dataTable.asMaps().get(0);
+        response = clientRequest.getClients();
+        List<Client> clientList = clientRequest.getClientsEntity(response);
+        Optional<Client> optionalClient = clientList.stream()
+                .filter(c -> c.getLastName().equalsIgnoreCase(clientDataMap.get("LastName")) &&
+                        c.getName().equalsIgnoreCase("Name")
+                        && c.getPhone().equalsIgnoreCase("Phone")).findFirst();
+        if (optionalClient.isPresent()) {
+            Client client = optionalClient.get();
+            client.setPhone(clientDataMap.get("Phone"));
+            client.setEmail("Email");
+            client.setCity("City");
+            clientRequest.updateClient(client, client.getId());
+        }
+
+    }
+
+    @And("verify that the client has been updated:")
+    public void verifyThatTheClientHasBeenUpdated(DataTable dataTable) {
+        Map<String, String> clientDataMap = dataTable.asMaps().get(0);
+        response = clientRequest.getClients();
+        List<Client> clientList = clientRequest.getClientsEntity(response);
+        Optional<Client> optionalClient = clientList.stream()
+                .filter(c -> c.getLastName().equalsIgnoreCase(clientDataMap.get("LastName")) &&
+                        c.getName().equalsIgnoreCase("Name")
+                        && c.getPhone().equalsIgnoreCase("Phone")).findFirst();
+        if (optionalClient.isPresent()) {
+            assertEquals(optionalClient.get().getPhone(), clientList.get(Integer.parseInt("Phone")));
+            assertEquals(optionalClient.get().getEmail(), clientList.get(Integer.parseInt("Email")));
+            assertEquals(optionalClient.get().getCity(), clientDataMap.get("Ciyt"));
+        }
+
+    }
+
+    @When("I delete the new client:")
+    public void iDeleteTheNewClient(DataTable dataTable) {
+        Map<String, String> clientDataMap = dataTable.asMaps().get(0);
+        response = clientRequest.getClients();
+        List<Client> clientList = clientRequest.getClientsEntity(response);
+        Optional<Client> optionalClient = clientList.stream()
+                .filter(c -> c.getLastName().equalsIgnoreCase(clientDataMap.get("LastName")) &&
+                        c.getName().equalsIgnoreCase("Name")
+                        && c.getPhone().equalsIgnoreCase("Phone")).findFirst();
+        if (optionalClient.isPresent()) {
+            response = clientRequest.deleteClient(optionalClient.get().getId());
+            log.info("The lastest element  created by us was successfuly deleted : {}", response.statusCode());
+        }
+    }
+
+    @And("verify that the client {string} {string} email {string} no longer exists")
+    public void verifyThatTheClientEmailNoLongerExists(String name, String lastName, String email) {
+        response = clientRequest.getClients();
+        List<Client> clientList = clientRequest.getClientsEntity(response);
+        Optional<Client> optionalClient = clientList.stream()
+                .filter(c -> c.getLastName().equalsIgnoreCase(name)
+                        && c.getEmail().equalsIgnoreCase(email)).findFirst();
+
+        Assert.assertTrue("The latest element  created by us was successfully deleted {} :user", optionalClient.isEmpty());
     }
 }
