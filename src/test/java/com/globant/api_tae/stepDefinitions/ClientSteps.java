@@ -3,7 +3,6 @@ package com.globant.api_tae.stepDefinitions;
 import com.globant.api_tae.models.Client;
 import com.globant.api_tae.requests.ClientRequest;
 import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -22,13 +21,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
- * The {@code ClientModificationSteps} class provides the step definitions for
+ * The {@code ClientSteps} class provides the step definitions for
  * modifying client data in a test suite. It uses REST API calls to interact with
  * client data and perform various operations like creating, updating, verifying
  * and deleting client information.
  */
-public class ClientModificationSteps {
-    private static final Logger log = LogManager.getLogger(ClientModificationSteps.class);
+public class ClientSteps {
+    private static final Logger log = LogManager.getLogger(ClientSteps.class);
     private final ClientRequest clientRequest = new ClientRequest();
     private Response response;
     private Client auxClient;
@@ -137,7 +136,8 @@ public class ClientModificationSteps {
                     .country(clientDataMap.get("Country"))
                     .city(clientDataMap.get("City"))
                     .email(clientDataMap.get("Email"))
-                    .phone(clientDataMap.get("Phone")).id(clientDataMap.get("Id")).build());
+                    .phone(clientDataMap.get("Phone"))
+                    .id(clientDataMap.get("Id")).build());
             log.info(response.statusCode());
             log.info(response.jsonPath().prettify());
             Assert.assertEquals(201, response.statusCode());
